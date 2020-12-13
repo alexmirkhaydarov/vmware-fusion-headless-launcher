@@ -1,1 +1,1 @@
-# vmware-fusion-headless-launcher
+# VMware fusion headless launcher

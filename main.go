@@ -27,8 +27,6 @@ func main() {
 		log.Fatal(err)
 	}
 
-	fmt.Println(homeDir + "/Virtual Machines.localized")
-
 	if _, err := os.Stat(homeDir + "/Virtual Machines.localized"); os.IsNotExist(err) {
 		log.Fatal(err)
 	}
@@ -40,7 +38,7 @@ func main() {
 
 	for i, f := range files {
 		if f.Name() != ".DS_Store" && f.Name() != ".localized" {
-			fmt.Println(strconv.Itoa(i) + " " + f.Name())
+			fmt.Println(strconv.Itoa(i - 1) + " " + f.Name())
 		}
 	}
 }

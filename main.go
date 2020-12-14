@@ -1,6 +1,7 @@
 package main
 
 import (
+	"path/filepath"
 	"os"
 	"fmt"
 	"os/exec"
@@ -37,7 +38,7 @@ func main() {
 	}
 
 	for i, f := range files {
-		if f.Name() != ".DS_Store" && f.Name() != ".localized" {
+		if filepath.Ext(f.Name()) == ".vmwarevm" {
 			fmt.Println(strconv.Itoa(i - 1) + " " + f.Name())
 		}
 	}

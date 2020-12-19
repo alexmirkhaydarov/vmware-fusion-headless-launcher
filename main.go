@@ -51,7 +51,7 @@ func main() {
 	// fmt.Println(input)
 
 	for i, f := range dir {
-		if i - 1 == input {
+		if i-1 == input {
 			// fmt.Println(f.Name())
 			// fmt.Println(homeDir + "/Virtual Machines.localized" + "/" + f.Name())
 			dir2, err := ioutil.ReadDir(homeDir + "/Virtual Machines.localized" + "/" + f.Name())
@@ -60,17 +60,17 @@ func main() {
 			}
 
 			for _, d := range dir2 {
-				if filepath.Ext(d.Name())  == ".vmx" {
+				if filepath.Ext(d.Name()) == ".vmx" {
 					// fmt.Println(homeDir + "/Virtual Machines.localized" + "/" + f.Name() + "/" + d.Name())
 
 					fullPath := homeDir + "/Virtual Machines.localized" + "/" + f.Name()
 					vmxImage := d.Name()
 
 					vmrunPath, _ := exec.LookPath("vmrun")
-					cmdRun := &exec.Cmd {
-						Path: vmrunPath,
-						Args: []string{ vmrunPath, "-T", "fusion", "start", vmxImage, "nogui"},
-						Dir: fullPath,
+					cmdRun := &exec.Cmd{
+						Path:   vmrunPath,
+						Args:   []string{vmrunPath, "-T", "fusion", "start", vmxImage, "nogui"},
+						Dir:    fullPath,
 						Stdout: os.Stdout,
 						Stderr: os.Stderr,
 					}

@@ -48,12 +48,9 @@ func main() {
 	fmt.Println("------------------------------------------")
 	var input int
 	fmt.Scan(&input)
-	// fmt.Println(input)
 
 	for i, f := range dir {
 		if i-1 == input {
-			// fmt.Println(f.Name())
-			// fmt.Println(homeDir + "/Virtual Machines.localized" + "/" + f.Name())
 			dir2, err := ioutil.ReadDir(homeDir + "/Virtual Machines.localized" + "/" + f.Name())
 			if err != nil {
 				log.Fatal(err)
@@ -61,8 +58,6 @@ func main() {
 
 			for _, d := range dir2 {
 				if filepath.Ext(d.Name()) == ".vmx" {
-					// fmt.Println(homeDir + "/Virtual Machines.localized" + "/" + f.Name() + "/" + d.Name())
-
 					fullPath := homeDir + "/Virtual Machines.localized" + "/" + f.Name()
 					vmxImage := d.Name()
 
@@ -75,15 +70,11 @@ func main() {
 						Stderr: os.Stderr,
 					}
 
-					// fmt.Println( cmdRun.String() )
-
 					if err := cmdRun.Run(); err != nil {
 						fmt.Println("Error:", err)
 					}
 				}
-				// 	fmt.Println(d.Name())
 			}
-			// fmt.Println(dir2)
 		}
 	}
 }

@@ -10,10 +10,10 @@ ___
 
 ## Build
 ```bash
-go build -o vfhlctl  ./main.go
+go build -o vmruncli  ./main.go
 ```
 
 ## Run
 ```bash
-./vfhlctl
+./vmruncli
 ```

@@ -11,18 +11,8 @@ import (
 )
 
 func main() {
-	// Checking if VMware is installed
-	if _, err := os.Stat("/Applications/VMware Fusion.app"); os.IsNotExist(err) {
-		log.Fatal(err)
-	}
-
-	// Checking if vmrun is available
-	cmd := exec.Command("vmrun")
-	err := cmd.Start()
-	if err != nil {
-		log.Fatal(err)
-	}
-
+	checks()
+	
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
 		log.Fatal(err)
@@ -76,5 +66,19 @@ func main() {
 				}
 			}
 		}
+	}
+}
+
+func checks() {
+	// Checking if VMware is installed
+	if _, err := os.Stat("/Applications/VMware Fusion.app"); os.IsNotExist(err) {
+		log.Fatal(err)
+	}
+
+	// Checking if vmrun is available
+	cmd := exec.Command("vmrun")
+	err := cmd.Start()
+	if err != nil {
+		log.Fatal(err)
 	}
 }

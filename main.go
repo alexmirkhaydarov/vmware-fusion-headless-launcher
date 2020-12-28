@@ -58,16 +58,16 @@ func checkVirtualMachineDirectory() {
 		}
 
 		vmDir = homeDir + value
-	
+
 		if _, err := os.Stat(vmDir); os.IsNotExist(err) {
 			log.Fatal(err)
 		}
-	
+
 		dir, err = ioutil.ReadDir(vmDir)
 		if err != nil {
 			log.Fatal(err)
 		}
-		
+
 	} else {
 		homeDir, err := os.UserHomeDir()
 		if err != nil {
@@ -75,11 +75,11 @@ func checkVirtualMachineDirectory() {
 		}
 
 		vmDir = homeDir + "/Virtual Machines.localized"
-	
+
 		if _, err := os.Stat(vmDir); os.IsNotExist(err) {
 			log.Fatal(err)
 		}
-	
+
 		dir, err = ioutil.ReadDir(vmDir)
 		if err != nil {
 			log.Fatal(err)

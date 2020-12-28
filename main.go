@@ -15,13 +15,24 @@ type option struct {
 	Option string
 }
 
+type vm struct {
+	Name string
+}
+
+var vmDir string
+var dir []os.FileInfo
+
 func main() {
 	checks()
+	checkVirtualMachineDirectory()
+	selection := selectOption()
 
-	if selectOption() == "Start a virtual machine" {
+	if selection == "Start a virtual machine" {
 		startVirtualMachine()
-	} else {
-		fmt.Println("Unrecognised option")
+	} else if selection == "Stop a virtual machine" {
+		fmt.Println("TODO")
+	} else if selection == "List all running virtual machines" {
+
 	}
 }
 
@@ -39,11 +50,48 @@ func checks() {
 	}
 }
 
+func checkVirtualMachineDirectory() {
+	if value, ok := os.LookupEnv("VIRTUAL_MACHINES_DIR"); ok {
+		homeDir, err := os.UserHomeDir()
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		vmDir = homeDir + value
+	
+		if _, err := os.Stat(vmDir); os.IsNotExist(err) {
+			log.Fatal(err)
+		}
+	
+		dir, err = ioutil.ReadDir(vmDir)
+		if err != nil {
+			log.Fatal(err)
+		}
+		
+	} else {
+		homeDir, err := os.UserHomeDir()
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		vmDir = homeDir + "/Virtual Machines.localized"
+	
+		if _, err := os.Stat(vmDir); os.IsNotExist(err) {
+			log.Fatal(err)
+		}
+	
+		dir, err = ioutil.ReadDir(vmDir)
+		if err != nil {
+			log.Fatal(err)
+		}
+	}
+}
+
 func selectOption() string {
 	options := []option{
 		{Option: "Start a virtual machine"},
 		{Option: "Stop a virtual machine"},
-		{Option: "List running virtual machines"},
+		{Option: "List all running virtual machines"},
 	}
 
 	templates := &promptui.SelectTemplates{
@@ -70,18 +118,9 @@ func selectOption() string {
 }
 
 func startVirtualMachine() {
-	homeDir, err := os.UserHomeDir()
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	if _, err := os.Stat(homeDir + "/Virtual Machines.localized"); os.IsNotExist(err) {
-		log.Fatal(err)
-	}
-
-	dir, err := ioutil.ReadDir(homeDir + "/Virtual Machines.localized")
-	if err != nil {
-		log.Fatal(err)
+	if len(dir) < 1 {
+		fmt.Println("No existing VMs")
+		return
 	}
 
 	for i, f := range dir {
@@ -90,20 +129,19 @@ func startVirtualMachine() {
 		}
 	}
 
-	fmt.Println("------------------------------------------")
 	var input int
 	fmt.Scan(&input)
 
 	for i, f := range dir {
 		if i-1 == input {
-			dir2, err := ioutil.ReadDir(homeDir + "/Virtual Machines.localized" + "/" + f.Name())
+			dir2, err := ioutil.ReadDir(vmDir + "/" + f.Name())
 			if err != nil {
 				log.Fatal(err)
 			}
 
 			for _, d := range dir2 {
 				if filepath.Ext(d.Name()) == ".vmx" {
-					fullPath := homeDir + "/Virtual Machines.localized" + "/" + f.Name()
+					fullPath := vmDir + "/" + f.Name()
 					vmxImage := d.Name()
 
 					vmrunPath, _ := exec.LookPath("vmrun")
@@ -122,4 +160,25 @@ func startVirtualMachine() {
 			}
 		}
 	}
+}
+
+func listRunningVMs() {
+	vmrunPath, _ := exec.LookPath("vmrun")
+	cmdRun := &exec.Cmd{
+		Path:   vmrunPath,
+		Args:   []string{vmrunPath, "list"},
+		Stdout: os.Stdout,
+		Stderr: os.Stderr,
+	}
+
+	if err := cmdRun.Run(); err != nil {
+		fmt.Println("Error:", err)
+	}
+
+	stdout, err := cmdRun.StdoutPipe()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Println("output: ", stdout)
 }

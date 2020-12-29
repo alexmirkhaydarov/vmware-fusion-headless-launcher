@@ -8,15 +8,10 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"strconv"
 )
 
 type option struct {
 	Option string
-}
-
-type vm struct {
-	Name string
 }
 
 var vmDir string
@@ -32,7 +27,7 @@ func main() {
 	} else if selection == "Stop a virtual machine" {
 		fmt.Println("TODO")
 	} else if selection == "List all running virtual machines" {
-
+		fmt.Println("TODO")
 	}
 }
 
@@ -98,7 +93,7 @@ func selectOption() string {
 		Label:    "{{ . }}",
 		Active:   "\U0001F4BE{{ .Option | cyan }}",
 		Inactive: "  {{ .Option | cyan }}",
-		Selected: "\U0001F4BE {{ .Option | white | cyan}}",
+		Selected: "\U0001F4BE {{ .Option | red | cyan}}",
 	}
 
 	prompt := promptui.Select{
@@ -123,17 +118,36 @@ func startVirtualMachine() {
 		return
 	}
 
-	for i, f := range dir {
+	var listOfVMs []string
+
+	for _, f := range dir {
 		if filepath.Ext(f.Name()) == ".vmwarevm" {
-			fmt.Println(strconv.Itoa(i-1) + " " + f.Name())
+			listOfVMs = append(listOfVMs, f.Name())
 		}
 	}
 
-	var input int
-	fmt.Scan(&input)
+	templates := &promptui.SelectTemplates{
+		Label:    "{{ . }}",
+		Active:   "\U0001F4BE{{ . | cyan }}",
+		Inactive: "  {{ . | cyan }}",
+		Selected: "\U0001F4BE {{ . | red | cyan}}",
+	}
 
-	for i, f := range dir {
-		if i-1 == input {
+	prompt := promptui.Select{
+		Label:     ">>",
+		Items:     listOfVMs,
+		Templates: templates,
+		Size:      5,
+	}
+
+	_, ff, err := prompt.Run()
+
+	if err != nil {
+		fmt.Printf("Promt failed %v\n", err)
+	}
+
+	for _, f := range dir {
+		if f.Name() == ff {
 			dir2, err := ioutil.ReadDir(vmDir + "/" + f.Name())
 			if err != nil {
 				log.Fatal(err)

@@ -1,13 +1,16 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 	"github.com/manifoldco/promptui"
+	"io"
 	"io/ioutil"
 	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 )
 
 type option struct {
@@ -25,9 +28,9 @@ func main() {
 	if selection == "Start a virtual machine" {
 		startVirtualMachine()
 	} else if selection == "Stop a virtual machine" {
-		fmt.Println("TODO")
+		stopVirtualMachine()
 	} else if selection == "List all running virtual machines" {
-		fmt.Println("TODO")
+		listRunningVMs()
 	}
 }
 
@@ -188,11 +191,56 @@ func listRunningVMs() {
 	if err := cmdRun.Run(); err != nil {
 		fmt.Println("Error:", err)
 	}
+}
 
-	stdout, err := cmdRun.StdoutPipe()
-	if err != nil {
-		log.Fatal(err)
+func runningVMs() []string {
+	vmrunCmd := exec.Command("vmrun", "list")
+	awkCmd := exec.Command("awk", "/.vmx/,0")
+	sedCmd := exec.Command("sed", "s:.*/::")
+
+	awkCmd.Stdin, _ = vmrunCmd.StdoutPipe()
+	sedCmd.Stdin, _ = awkCmd.StdoutPipe()
+	var buf bytes.Buffer
+
+	sedCmd.Stdout = &buf
+
+	var buff strings.Builder
+
+	// sedCmd.Stdout = os.Stdout
+
+	sedCmd.Start()
+	awkCmd.Start()
+	vmrunCmd.Run()
+	awkCmd.Wait()
+	sedCmd.Wait()
+
+	io.Copy(&buff, &buf)
+
+	return strings.Split(buff.String(), "\n")
+
+	// fmt.Println(strings.Split(buff.String(), "\n"))
+}
+
+func stopVirtualMachine() {
+	templates := &promptui.SelectTemplates{
+		Label:    "{{ . }}",
+		Active:   "\U0001F4BE{{ . | cyan }}",
+		Inactive: "  {{ . | cyan }}",
+		Selected: "\U0001F4BE {{ . | red | cyan}}",
 	}
 
-	fmt.Println("output: ", stdout)
+	prompt := promptui.Select{
+		Label:     ">>",
+		Items:     runningVMs(),
+		Templates: templates,
+		Size:      5,
+	}
+
+	_, ff, err := prompt.Run()
+
+	fmt.Println("ff:", ff)
+
+	if err != nil {
+		fmt.Printf("Promt failed %v\n", err)
+	}
 }

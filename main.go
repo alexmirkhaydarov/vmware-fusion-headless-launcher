@@ -196,17 +196,35 @@ func listRunningVMs() {
 func runningVMs() []string {
 	vmrunCmd := exec.Command("vmrun", "list")
 	awkCmd := exec.Command("awk", "/.vmx/,0")
+
+	awkCmd.Stdin, _ = vmrunCmd.StdoutPipe()
+	
+	var buf bytes.Buffer
+	var buff strings.Builder
+
+	awkCmd.Stdout = &buf
+
+	awkCmd.Start()
+	vmrunCmd.Run()
+	awkCmd.Wait()
+
+	io.Copy(&buff, &buf)
+
+	return strings.Split(buff.String(), "\n")
+}
+
+func truncatedRunningVMs() []string {
+	vmrunCmd := exec.Command("vmrun", "list")
+	awkCmd := exec.Command("awk", "/.vmx/,0")
 	sedCmd := exec.Command("sed", "s:.*/::")
 
 	awkCmd.Stdin, _ = vmrunCmd.StdoutPipe()
 	sedCmd.Stdin, _ = awkCmd.StdoutPipe()
+	
 	var buf bytes.Buffer
-
-	sedCmd.Stdout = &buf
-
 	var buff strings.Builder
 
-	// sedCmd.Stdout = os.Stdout
+	sedCmd.Stdout = &buf
 
 	sedCmd.Start()
 	awkCmd.Start()
@@ -217,8 +235,6 @@ func runningVMs() []string {
 	io.Copy(&buff, &buf)
 
 	return strings.Split(buff.String(), "\n")
-
-	// fmt.Println(strings.Split(buff.String(), "\n"))
 }
 
 func stopVirtualMachine() {
@@ -231,16 +247,30 @@ func stopVirtualMachine() {
 
 	prompt := promptui.Select{
 		Label:     ">>",
-		Items:     runningVMs(),
+		Items:     truncatedRunningVMs(),
 		Templates: templates,
 		Size:      5,
 	}
 
-	_, ff, err := prompt.Run()
-
-	fmt.Println("ff:", ff)
+	i, _, err := prompt.Run()
 
 	if err != nil {
 		fmt.Printf("Promt failed %v\n", err)
+	}
+
+	for ii, v := range runningVMs() {
+		if i == ii {
+			vmrunPath, _ := exec.LookPath("vmrun")
+			cmdRun := &exec.Cmd{
+				Path:   vmrunPath,
+				Args:   []string{vmrunPath, "-T", "fusion", "stop", v},
+				Stdout: os.Stdout,
+				Stderr: os.Stderr,
+			}
+
+			if err := cmdRun.Run(); err != nil {
+				fmt.Println("Error:", err)
+			}
+		}
 	}
 }

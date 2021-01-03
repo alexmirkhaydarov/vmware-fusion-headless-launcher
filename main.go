@@ -198,7 +198,7 @@ func runningVMs() []string {
 	awkCmd := exec.Command("awk", "/.vmx/,0")
 
 	awkCmd.Stdin, _ = vmrunCmd.StdoutPipe()
-	
+
 	var buf bytes.Buffer
 	var buff strings.Builder
 
@@ -220,7 +220,7 @@ func truncatedRunningVMs() []string {
 
 	awkCmd.Stdin, _ = vmrunCmd.StdoutPipe()
 	sedCmd.Stdin, _ = awkCmd.StdoutPipe()
-	
+
 	var buf bytes.Buffer
 	var buff strings.Builder
 

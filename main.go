@@ -258,12 +258,12 @@ func stopVirtualMachine() {
 		fmt.Printf("Promt failed %v\n", err)
 	}
 
-	for ii, v := range runningVMs() {
+	for ii, vm := range runningVMs() {
 		if i == ii {
 			vmrunPath, _ := exec.LookPath("vmrun")
 			cmdRun := &exec.Cmd{
 				Path:   vmrunPath,
-				Args:   []string{vmrunPath, "-T", "fusion", "stop", v},
+				Args:   []string{vmrunPath, "-T", "fusion", "stop", vm},
 				Stdout: os.Stdout,
 				Stderr: os.Stderr,
 			}

@@ -38,6 +38,7 @@ func checks() {
 	// Checking if VMware is installed
 	if _, err := os.Stat("/Applications/VMware Fusion.app"); os.IsNotExist(err) {
 		log.Fatal(err)
+		os.Exit(1)
 	}
 
 	// Checking if vmrun is available
@@ -45,6 +46,7 @@ func checks() {
 	err := cmd.Start()
 	if err != nil {
 		log.Fatal(err)
+		os.Exit(1)
 	}
 }
 
@@ -53,34 +55,40 @@ func checkVirtualMachineDirectory() {
 		homeDir, err := os.UserHomeDir()
 		if err != nil {
 			log.Fatal(err)
+			os.Exit(1)
 		}
 
 		vmDir = homeDir + value
 
 		if _, err := os.Stat(vmDir); os.IsNotExist(err) {
 			log.Fatal(err)
+			os.Exit(1)
 		}
 
 		dir, err = ioutil.ReadDir(vmDir)
 		if err != nil {
 			log.Fatal(err)
+			os.Exit(1)
 		}
 
 	} else {
 		homeDir, err := os.UserHomeDir()
 		if err != nil {
 			log.Fatal(err)
+			os.Exit(1)
 		}
 
 		vmDir = homeDir + "/Virtual Machines.localized"
 
 		if _, err := os.Stat(vmDir); os.IsNotExist(err) {
 			log.Fatal(err)
+			os.Exit(1)
 		}
 
 		dir, err = ioutil.ReadDir(vmDir)
 		if err != nil {
 			log.Fatal(err)
+			os.Exit(1)
 		}
 	}
 }
@@ -110,6 +118,7 @@ func selectOption() string {
 
 	if err != nil {
 		fmt.Printf("Promt failed %v\n", err)
+		os.Exit(1)
 	}
 
 	return options[i].Option
@@ -147,6 +156,7 @@ func startVirtualMachine() {
 
 	if err != nil {
 		fmt.Printf("Promt failed %v\n", err)
+		os.Exit(1)
 	}
 
 	for _, f := range dir {
@@ -154,6 +164,7 @@ func startVirtualMachine() {
 			dir2, err := ioutil.ReadDir(vmDir + "/" + f.Name())
 			if err != nil {
 				log.Fatal(err)
+				os.Exit(1)
 			}
 
 			for _, d := range dir2 {
@@ -172,6 +183,7 @@ func startVirtualMachine() {
 
 					if err := cmdRun.Run(); err != nil {
 						fmt.Println("Error:", err)
+						os.Exit(1)
 					}
 				}
 			}
@@ -190,10 +202,11 @@ func listRunningVMs() {
 
 	if err := cmdRun.Run(); err != nil {
 		fmt.Println("Error:", err)
+		os.Exit(1)
 	}
 }
 
-func runningVMs() []string {
+func getRunningVMsFullPath() []string {
 	vmrunCmd := exec.Command("vmrun", "list")
 	awkCmd := exec.Command("awk", "/.vmx/,0")
 
@@ -213,7 +226,7 @@ func runningVMs() []string {
 	return strings.Split(buff.String(), "\n")
 }
 
-func truncatedRunningVMs() []string {
+func getVMs() []string {
 	vmrunCmd := exec.Command("vmrun", "list")
 	awkCmd := exec.Command("awk", "/.vmx/,0")
 	sedCmd := exec.Command("sed", "s:.*/::")
@@ -238,6 +251,13 @@ func truncatedRunningVMs() []string {
 }
 
 func stopVirtualMachine() {
+	vms := getVMs()
+	vms = vms[:len(vms)-1]
+	vms = append(vms, "Stop all VMs")
+
+	runningVMs := getRunningVMsFullPath()
+	runningVMs = runningVMs[:len(runningVMs)-1]
+
 	templates := &promptui.SelectTemplates{
 		Label:    "{{ . }}",
 		Active:   "\U0001F4BE{{ . | cyan }}",
@@ -247,18 +267,36 @@ func stopVirtualMachine() {
 
 	prompt := promptui.Select{
 		Label:     ">>",
-		Items:     truncatedRunningVMs(),
+		Items:     vms,
 		Templates: templates,
 		Size:      5,
 	}
 
-	i, _, err := prompt.Run()
+	i, f, err := prompt.Run()
 
 	if err != nil {
 		fmt.Printf("Promt failed %v\n", err)
+		os.Exit(1)
 	}
 
-	for ii, vm := range runningVMs() {
+	if f == "Stop all VMs" {
+		for _, vm := range runningVMs {
+			vmrunPath, _ := exec.LookPath("vmrun")
+			cmdRun := &exec.Cmd{
+				Path:   vmrunPath,
+				Args:   []string{vmrunPath, "-T", "fusion", "stop", vm},
+				Stdout: os.Stdout,
+				Stderr: os.Stderr,
+			}
+
+			if err := cmdRun.Run(); err != nil {
+				fmt.Println("Error:", err)
+				os.Exit(1)
+			}
+		}
+	}
+
+	for ii, vm := range runningVMs {
 		if i == ii {
 			vmrunPath, _ := exec.LookPath("vmrun")
 			cmdRun := &exec.Cmd{
@@ -270,6 +308,7 @@ func stopVirtualMachine() {
 
 			if err := cmdRun.Run(); err != nil {
 				fmt.Println("Error:", err)
+				os.Exit(1)
 			}
 		}
 	}

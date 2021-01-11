@@ -10,10 +10,10 @@ ___
 
 ## Build
 ```bash
-go build -o vmruncli  ./main.go
+env GOOS=darwin GOARCH=amd64 go build -o vmruncli
 ```
 
-## Run
+## Add to path
 ```bash
-./vmruncli
+mv vmruncli /usr/local/bin
 ```

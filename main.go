@@ -130,11 +130,30 @@ func startVirtualMachine() {
 		return
 	}
 
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		log.Fatal(err)
+		os.Exit(1)
+	}
+
+	vmDir = homeDir + "/Virtual Machines.localized/"
+	vms := getVMs()
+	vms = vms[:len(vms)-1]
+
+	runningVMs := getRunningVMsFullPath()
+	runningVMs = runningVMs[:len(runningVMs)-1]
+
 	var listOfVMs []string
 
 	for _, f := range dir {
 		if filepath.Ext(f.Name()) == ".vmwarevm" {
-			listOfVMs = append(listOfVMs, f.Name())
+			for _, runningVM := range runningVMs {
+				for _, vm := range vms {
+					if runningVM != vmDir+f.Name()+"/"+vm {
+						listOfVMs = append(listOfVMs, f.Name())
+					}
+				}
+			}
 		}
 	}
 

@@ -3,14 +3,13 @@ package main
 import (
 	"bytes"
 	"fmt"
-	"github.com/manifoldco/promptui"
 	"io"
-	"io/ioutil"
 	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"github.com/manifoldco/promptui"
 )
 
 type option struct {
@@ -18,7 +17,7 @@ type option struct {
 }
 
 var vmDir string
-var dir []os.FileInfo
+var dir []os.DirEntry
 
 func main() {
 	checks()
@@ -65,7 +64,7 @@ func checkVirtualMachineDirectory() {
 			os.Exit(1)
 		}
 
-		dir, err = ioutil.ReadDir(vmDir)
+		dir, err = os.ReadDir(vmDir)
 		if err != nil {
 			log.Fatal(err)
 			os.Exit(1)
@@ -85,7 +84,7 @@ func checkVirtualMachineDirectory() {
 			os.Exit(1)
 		}
 
-		dir, err = ioutil.ReadDir(vmDir)
+		dir, err = os.ReadDir(vmDir)
 		if err != nil {
 			log.Fatal(err)
 			os.Exit(1)
@@ -126,8 +125,8 @@ func selectOption() string {
 
 func startVirtualMachine() {
 	if len(dir) < 1 {
-		fmt.Println("No existing VMs")
-		return
+	  fmt.Println("No existing VMs")
+	  return
 	}
 
 	homeDir, err := os.UserHomeDir()
@@ -139,20 +138,30 @@ func startVirtualMachine() {
 	vmDir = homeDir + "/Virtual Machines.localized/"
 	vms := getVMs()
 	vms = vms[:len(vms)-1]
-
 	runningVMs := getRunningVMsFullPath()
 	runningVMs = runningVMs[:len(runningVMs)-1]
 
 	var listOfVMs []string
+	var counter int
 
 	for _, f := range dir {
+		counter = 0
 		if filepath.Ext(f.Name()) == ".vmwarevm" {
 			for _, runningVM := range runningVMs {
+				if len(runningVM) != 0 {
+					counter = counter + 1
+				}
 				for _, vm := range vms {
+					if len(vm) != 0 {
+						counter = counter + 1
+					}
 					if runningVM != vmDir+f.Name()+"/"+vm {
 						listOfVMs = append(listOfVMs, f.Name())
 					}
 				}
+			}
+			if counter == 0 {
+				listOfVMs = append(listOfVMs, f.Name())
 			}
 		}
 	}
@@ -180,7 +189,7 @@ func startVirtualMachine() {
 
 	for _, f := range dir {
 		if f.Name() == ff {
-			dir2, err := ioutil.ReadDir(vmDir + "/" + f.Name())
+			dir2, err := os.ReadDir(vmDir + "/" + f.Name())
 			if err != nil {
 				log.Fatal(err)
 				os.Exit(1)
@@ -265,7 +274,6 @@ func getVMs() []string {
 	sedCmd.Wait()
 
 	io.Copy(&buff, &buf)
-
 	return strings.Split(buff.String(), "\n")
 }
 
